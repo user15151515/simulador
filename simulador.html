@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulador de Escenarios – Top 3 LaLiga 2024–2025</title>
+  <style>
+    /* Estilo general y fondo */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 950px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 25px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 2em;
+      color: #333;
+    }
+    .small-note {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #555;
+      line-height: 1.4;
+    }
+    /* Estilo de la tabla: se ajusta al contenido */
+    table {
+      border-collapse: collapse;
+      margin: 0 auto;
+      width: auto;
+    }
+    th, td {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      text-align: center;
+      white-space: nowrap;
+    }
+    th {
+      background-color: #007BFF;
+      color: #fff;
+      font-size: 1.1em;
+    }
+    tfoot td {
+      font-weight: bold;
+      background-color: #e9ecef;
+    }
+    /* Botón (para confirmar) pequeño */
+    .confirm-btn {
+      padding: 2px 4px;
+      font-size: 0.9em;
+      background-color: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .confirm-btn:hover {
+      background-color: #0056b3;
+    }
+    /* Celda clicable */
+    td.clickable {
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Simulador de Escenarios</h1>
+    <!-- Tabla de fixtures con columna adicional para confirmar -->
+    <table id="fixturesTable">
+      <thead>
+        <tr>
+          <th>Jornada</th>
+          <th>FC Barcelona</th>
+          <th>Real Madrid</th>
+          <th>Atlético de Madrid</th>
+          <th>Confirmar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Se generarán las filas automáticamente -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Puntos Simulados</td>
+          <td id="result_barca"></td>
+          <td id="result_madrid"></td>
+          <td id="result_atleti"></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    
+    <div style="text-align:center;">
+      <button class="confirm-btn" onclick="resetSimulacion()">Resetear</button>
+    </div>
+  </div>
+
+  <script>
+    /******************************************
+     * Persistencia: Cargar y guardar en localStorage
+     ******************************************/
+    var savedPredictions = {};
+    function loadPredictions() {
+      var stored = localStorage.getItem("laLigaPredictions");
+      if(stored) {
+        savedPredictions = JSON.parse(stored);
+      } else {
+        savedPredictions = {};
+      }
+    }
+    function savePredictions() {
+      localStorage.setItem("laLigaPredictions", JSON.stringify(savedPredictions));
+    }
+
+    /******************************************
+     * Puntos base (internos)
+     ******************************************/
+    const basePoints = {
+      barca: 42,
+      madrid: 49,
+      atleti: 45
+    };
+
+    /******************************************
+     * Fixture oficial para la temporada 2024–2025  
+     * (Jornadas 22 a 38). Cada objeto incluye solo el rival.
+     ******************************************/
+    var fixtures = [
+      // Jornada 22
+      { matchday: 22, barca: "Alavés",       madrid: "Espanyol",       atleti: "Mallorca" },
+      // Jornada 23
+      { matchday: 23, barca: "Sevilla FC",    madrid: "Atlético de Madrid", atleti: "Real Madrid" },
+      // Jornada 24
+      { matchday: 24, barca: "Rayo Vallecano", madrid: "Osasuna",        atleti: "Celta de Vigo" },
+      // Jornada 25
+      { matchday: 25, barca: "UD Las Palmas", madrid: "Girona",         atleti: "Valencia CF" },
+      // Jornada 26
+      { matchday: 26, barca: "Real Sociedad", madrid: "Real Betis",     atleti: "Athletic Club" },
+      // Jornada 27
+      { matchday: 27, barca: "Osasuna",       madrid: "Rayo Vallecano", atleti: "Getafe CF" },
+      // Jornada 28
+      { matchday: 28, barca: "Atlético de Madrid", madrid: "Villarreal", atleti: "FC Barcelona" },
+      // Jornada 29
+      { matchday: 29, barca: "Girona FC",     madrid: "Leganés",        atleti: "Espanyol" },
+      // Jornada 30
+      { matchday: 30, barca: "Real Betis",    madrid: "Valencia",       atleti: "Sevilla FC" },
+      // Jornada 31
+      { matchday: 31, barca: "Leganés",       madrid: "Alavés",         atleti: "Real Valladolid" },
+      // Jornada 32
+      { matchday: 32, barca: "Celta de Vigo", madrid: "Athletic Club",  atleti: "UD Las Palmas" },
+      // Jornada 33
+      { matchday: 33, barca: "RCD Mallorca",  madrid: "Getafe",         atleti: "Rayo Vallecano" },
+      // Jornada 34
+      { matchday: 34, barca: "Real Valladolid", madrid: "Celta de Vigo", atleti: "Deportivo Alavés" },
+      // Jornada 35
+      { matchday: 35, barca: "Real Madrid",   madrid: "FC Barcelona",   atleti: "Real Sociedad" },
+      // Jornada 36
+      { matchday: 36, barca: "RCD Espanyol",  madrid: "Mallorca",       atleti: "Osasuna" },
+      // Jornada 37
+      { matchday: 37, barca: "Villarreal CF", madrid: "Sevilla FC",     atleti: "Real Betis" },
+      // Jornada 38
+      { matchday: 38, barca: "Athletic Club", madrid: "Real Sociedad",  atleti: "Girona FC" }
+    ];
+    
+    /******************************************
+     * Función: Crear una celda clicable para el fixture.
+     * Se asigna un id, se establece el estado (según lo guardado) y se añade un listener.
+     ******************************************/
+    function createTeamCell(teamKey, opponent, matchday) {
+      var cell = document.createElement("td");
+      cell.classList.add("clickable");
+      cell.id = "result_" + matchday + "_" + teamKey;
+      cell.dataset.matchday = matchday;
+      // Inicializar en savedPredictions si no existe.
+      if(!savedPredictions[matchday]) {
+        savedPredictions[matchday] = { barca: "", madrid: "", atleti: "", confirmed: false };
+      }
+      cell.dataset.result = savedPredictions[matchday][teamKey];
+      cell.textContent = opponent;
+      updateCellColor(cell);
+      // Permitir cambios solo si la jornada no está confirmada.
+      if(!savedPredictions[matchday].confirmed) {
+        cell.addEventListener("click", function() {
+          cellClicked(cell);
+        });
+      } else {
+        cell.style.cursor = "default";
+      }
+      return cell;
+    }
+
+    // Actualiza el color de fondo de la celda según su estado.
+    function updateCellColor(cell) {
+      var state = cell.dataset.result;
+      if(state === "v") {
+        cell.style.backgroundColor = "#d4edda"; // verde claro
+      } else if(state === "e") {
+        cell.style.backgroundColor = "#fff3cd"; // naranja claro
+      } else if(state === "d") {
+        cell.style.backgroundColor = "#f8d7da"; // rojo claro
+      } else {
+        cell.style.backgroundColor = "";
+      }
+    }
+
+    /******************************************
+     * Función: Manejar el clic en una celda.
+     * Se cicla el estado y, si está vinculada (derbi), se actualiza la celda vinculada con el resultado complementario.
+     ******************************************/
+    function cellClicked(cell) {
+      var matchday = cell.dataset.matchday;
+      if(savedPredictions[matchday].confirmed) return;
+      const states = ["", "v", "e", "d"];
+      var current = cell.dataset.result;
+      var index = states.indexOf(current);
+      var newState = states[(index + 1) % states.length];
+      cell.dataset.result = newState;
+      updateCellColor(cell);
+      var teamKey = cell.id.split("_")[2];
+      savedPredictions[matchday][teamKey] = newState;
+      // Si la celda está vinculada (derbi), actualizar la otra con el resultado complementario.
+      if(cell.dataset.linked) {
+        var linkedCell = document.getElementById(cell.dataset.linked);
+        if(linkedCell) {
+          let linkedNewState;
+          if(newState === "v") {
+            linkedNewState = "d";
+          } else if(newState === "d") {
+            linkedNewState = "v";
+          } else {
+            linkedNewState = newState;
+          }
+          linkedCell.dataset.result = linkedNewState;
+          updateCellColor(linkedCell);
+          var linkedTeamKey = linkedCell.id.split("_")[2];
+          savedPredictions[matchday][linkedTeamKey] = linkedNewState;
+        }
+      }
+      savePredictions();
+      calcularSimulacion();
+    }
+
+    /******************************************
+     * Función: Generar la tabla de fixtures.
+     ******************************************/
+    function populateFixtures() {
+      loadPredictions();
+      var tbody = document.getElementById("fixturesTable").getElementsByTagName("tbody")[0];
+      tbody.innerHTML = "";
+      fixtures.forEach(function(fixture) {
+        var row = document.createElement("tr");
+        // Celda de jornada.
+        var cellJornada = document.createElement("td");
+        cellJornada.textContent = "J" + fixture.matchday;
+        row.appendChild(cellJornada);
+        // Crear celdas para cada equipo.
+        var cellBarca = createTeamCell("barca", fixture.barca, fixture.matchday);
+        var cellMadrid = createTeamCell("madrid", fixture.madrid, fixture.matchday);
+        var cellAtleti = createTeamCell("atleti", fixture.atleti, fixture.matchday);
+        row.appendChild(cellBarca);
+        row.appendChild(cellMadrid);
+        row.appendChild(cellAtleti);
+        // Celda de confirmación.
+        var cellConfirm = document.createElement("td");
+        if(savedPredictions[fixture.matchday].confirmed) {
+          cellConfirm.textContent = "✔";
+          cellConfirm.style.fontWeight = "bold";
+          cellConfirm.style.fontSize = "1.2em";
+        } else {
+          var btn = document.createElement("button");
+          btn.textContent = "✓";
+          btn.className = "confirm-btn";
+          btn.onclick = function() { confirmMatchday(fixture.matchday); };
+          cellConfirm.appendChild(btn);
+        }
+        row.appendChild(cellConfirm);
+        tbody.appendChild(row);
+        // Vinculación de celdas en derbis:
+        // Derbi Real Madrid – Atlético de Madrid (J23, J31, J37)
+        if(fixture.matchday === 23 || fixture.matchday === 31 || fixture.matchday === 37) {
+          if(fixture.madrid === "Atlético de Madrid" && fixture.atleti === "Real Madrid") {
+            cellMadrid.dataset.linked = cellAtleti.id;
+            cellAtleti.dataset.linked = cellMadrid.id;
+          }
+        }
+        // Derbi FC Barcelona – Atlético de Madrid (J28)
+        if(fixture.matchday === 28) {
+          if(fixture.barca === "Atlético de Madrid" && fixture.atleti === "FC Barcelona") {
+            cellBarca.dataset.linked = cellAtleti.id;
+            cellAtleti.dataset.linked = cellBarca.id;
+          }
+        }
+        // Derbi FC Barcelona – Real Madrid (J35)
+        if(fixture.matchday === 35) {
+          if(fixture.barca === "Real Madrid" && fixture.madrid.toLowerCase().includes("fc barcelona")) {
+            cellBarca.dataset.linked = cellMadrid.id;
+            cellMadrid.dataset.linked = cellBarca.id;
+          }
+        }
+      });
+      calcularSimulacion();
+      savePredictions();
+    }
+
+    /******************************************
+     * Función: Confirmar una jornada (matchday).
+     * Al confirmar, se bloquean las celdas de esa jornada.
+     ******************************************/
+    function confirmMatchday(matchday) {
+      if(savedPredictions[matchday]) {
+        savedPredictions[matchday].confirmed = true;
+        ["barca", "madrid", "atleti"].forEach(function(team) {
+          var cell = document.getElementById("result_" + matchday + "_" + team);
+          if(cell) {
+            cell.style.cursor = "default";
+            cell.style.pointerEvents = "none";
+          }
+        });
+        savePredictions();
+        populateFixtures(); // Refresca la tabla para mostrar la marca de confirmación.
+      }
+    }
+
+    /******************************************
+     * Función: Calcular los puntos simulados.
+     ******************************************/
+    function calcularSimulacion() {
+      var totalBarca = basePoints.barca;
+      var totalMadrid = basePoints.madrid;
+      var totalAtleti = basePoints.atleti;
+      fixtures.forEach(function(fixture) {
+        var matchday = fixture.matchday;
+        var cellBarca = document.getElementById("result_" + matchday + "_barca");
+        if(cellBarca) {
+          var res = cellBarca.dataset.result;
+          if(res === "v") totalBarca += 3;
+          else if(res === "e") totalBarca += 1;
+        }
+        var cellMadrid = document.getElementById("result_" + matchday + "_madrid");
+        if(cellMadrid) {
+          var res = cellMadrid.dataset.result;
+          if(res === "v") totalMadrid += 3;
+          else if(res === "e") totalMadrid += 1;
+        }
+        var cellAtleti = document.getElementById("result_" + matchday + "_atleti");
+        if(cellAtleti) {
+          var res = cellAtleti.dataset.result;
+          if(res === "v") totalAtleti += 3;
+          else if(res === "e") totalAtleti += 1;
+        }
+      });
+      var maxPoints = Math.max(totalBarca, totalMadrid, totalAtleti);
+      document.getElementById("result_barca").innerHTML = (totalBarca === maxPoints ? "👑 " : "") + totalBarca;
+      document.getElementById("result_madrid").innerHTML = (totalMadrid === maxPoints ? "👑 " : "") + totalMadrid;
+      document.getElementById("result_atleti").innerHTML = (totalAtleti === maxPoints ? "👑 " : "") + totalAtleti;
+    }
+
+    /******************************************
+     * Función: Resetear la simulación (borrando todas las previsiones)
+     ******************************************/
+    function resetSimulacion() {
+      fixtures.forEach(function(fixture) {
+        var matchday = fixture.matchday;
+        if(savedPredictions[matchday]) {
+          savedPredictions[matchday].barca = "";
+          savedPredictions[matchday].madrid = "";
+          savedPredictions[matchday].atleti = "";
+          savedPredictions[matchday].confirmed = false;
+        }
+      });
+      savePredictions();
+      populateFixtures();
+    }
+
+    // Inicialización: cargar las previsiones y generar la tabla al cargar la página.
+    window.onload = function() {
+      loadPredictions();
+      populateFixtures();
+    }
+  </script>
+</body>
+</html>
