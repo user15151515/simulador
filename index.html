@@ -136,10 +136,54 @@
 .matchday-deconfirm-btn:hover {
   color: #c0392b;
 }
-    @media(max-width: 768px) {
-      table { font-size: 0.85em; }
-      .action-btn { padding: 5px 10px; font-size: 0.85em; }
-    }
+/* Contenedor y tipografía adaptados */
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+  .container {
+    padding: 10px;
+    margin: 0;
+    width: 100%;
+  }
+  h1 {
+    font-size: 1.8em;
+  }
+  .small-note {
+    font-size: 0.85em;
+  }
+}
+
+/* Tabla responsiva: se ajusta el tamaño de fuente, padding y se permite scroll horizontal */
+@media (max-width: 600px) {
+  .table-responsive,
+  table {
+    width: 100%;
+    overflow-x: auto;
+    display: block;
+  }
+  table {
+    font-size: 0.8em;
+  }
+  th, td {
+    padding: 5px;
+  }
+  /* Reducir la anchura de la columna de jornadas */
+  th:first-child, td:first-child {
+    width: 30px;
+  }
+}
+
+/* Botones de confirmación/desconfirmación ya se adaptan al tamaño, pero se pueden ajustar aún más si es necesario */
+@media (max-width: 600px) {
+  .matchday-confirm-btn,
+  .matchday-deconfirm-btn {
+    font-size: 1.3em;
+    width: 30px;
+    height: 30px;
+  }
+}
+
   </style>
 </head>
 <body>
