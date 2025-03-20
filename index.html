@@ -467,19 +467,20 @@
     /******************************************
      * Función: Resetear la simulación (borrando todas las previsiones)
      ******************************************/
-    function resetSimulacion() {
-      fixtures.forEach(function(fixture) {
-        var matchday = fixture.matchday;
-        if(savedPredictions[matchday]) {
-          savedPredictions[matchday].barca = "";
-          savedPredictions[matchday].madrid = "";
-          savedPredictions[matchday].atleti = "";
-          savedPredictions[matchday].confirmed = false;
-        }
-      });
-      savePredictions();
-      populateFixtures();
+     function resetSimulacion() {
+  fixtures.forEach(function(fixture) {
+    var matchday = fixture.matchday;
+    if (savedPredictions[matchday] && !savedPredictions[matchday].confirmed) {
+      // Solo resetear las jornadas NO confirmadas
+      savedPredictions[matchday].barca = "";
+      savedPredictions[matchday].madrid = "";
+      savedPredictions[matchday].atleti = "";
     }
+  });
+  savePredictions();
+  populateFixtures();
+}
+
     
     /******************************************
      * Función: Marcar celdas sin resultado (vacías) como victoria.
